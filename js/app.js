@@ -13,6 +13,31 @@
   var SETTINGS_KEY = 'twoOfYou.settings.v1';
   var DEV_PLACEHOLDERS = 12;
 
+  /* ?debug in the URL shows an on-screen log of what happens to each picked
+   * photo, so problems can be diagnosed on an iPad without developer tools. */
+  var debugMode = /[?&]debug\b/.test(location.search);
+  var debugPanel = null;
+  function debugLog(msg) {
+    if (!debugMode) return;
+    if (!debugPanel) {
+      debugPanel = document.createElement('pre');
+      debugPanel.className = 'debug-log';
+      debugPanel.setAttribute('aria-label', 'Diagnostic log');
+      document.body.appendChild(debugPanel);
+    }
+    var t = new Date().toTimeString().slice(0, 8);
+    debugPanel.textContent += t + '  ' + msg + '\n';
+    debugPanel.scrollTop = debugPanel.scrollHeight;
+  }
+  if (debugMode) {
+    window.addEventListener('error', function (e) { debugLog('ERROR: ' + e.message + ' (' + e.filename + ':' + e.lineno + ')'); });
+    window.addEventListener('unhandledrejection', function (e) { debugLog('UNHANDLED: ' + (e.reason && (e.reason.stack || e.reason.message) || e.reason)); });
+    setTimeout(function () {
+      debugLog('Diagnostics on. ' + navigator.userAgent);
+      debugLog('Page: ' + location.href + '  service worker controlling: ' + !!(navigator.serviceWorker && navigator.serviceWorker.controller));
+    }, 0);
+  }
+
   var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   function flipMs() { return reducedMotion.matches ? 0 : 430; }
 
@@ -24,7 +49,7 @@
     },
     setupNames: $('setup-names'), setupSound: $('setup-sound'),
     photosTitle: $('photos-title'), photosSub: $('photos-sub'),
-    photoStatus: $('photo-status'), photoTray: $('photo-tray'),
+    photoStatus: $('photo-status'), photoErrors: $('photo-errors'), photoTray: $('photo-tray'),
     fileInput: $('file-input'), btnStart: $('btn-start'),
     btnClear: $('btn-clear-photos'), btnDev: $('btn-dev-photos'),
     scoreStrip: $('score-strip'), boardWrap: $('board-wrap'), board: $('board'),
@@ -161,7 +186,8 @@
   }
 
   function openFilePicker() {
-    if (processing) return;
+    if (processing) { debugLog('Add photos ignored: still preparing earlier photos'); return; }
+    debugLog('Opening photo picker (have ' + pool.length + ', need ' + pairsNeeded() + ')');
     el.fileInput.value = '';
     el.fileInput.click();
   }
@@ -235,40 +261,87 @@
     renderPhotos();
   }
 
+  function fileKey(f) { return [f.name, f.size, f.lastModified].join('|'); }
+
   async function addFiles(files) {
     if (!files.length) return;
     processing = true;
     el.btnStart.disabled = true;
     el.btnClear.hidden = true;
-    var failed = 0;
-    for (var i = 0; i < files.length; i++) {
-      setStatus('Preparing photo ' + (i + 1) + ' of ' + files.length + '…');
-      try {
-        var result = await TOYPhotos.process(files[i]);
-        result.id = nextId++;
-        result.selected = selectedPhotos().length < pairsNeeded();
-        pool.push(result);
-      } catch (e) {
-        failed++;
+    var problems = { heic: [], unreadable: [], timeout: [], duplicate: [] };
+    var seen = {};
+    pool.forEach(function (p) { seen[p.key] = true; });
+    try {
+      for (var i = 0; i < files.length; i++) {
+        var f = files[i];
+        var key = fileKey(f);
+        if (seen[key]) { debugLog('skip duplicate "' + f.name + '"'); problems.duplicate.push(f.name); continue; }
+        seen[key] = true;
+        setStatus('Preparing photo ' + (i + 1) + ' of ' + files.length + '…');
+        try {
+          var result = await TOYPhotos.process(f, debugMode ? debugLog : null);
+          result.id = nextId++;
+          result.key = key;
+          result.selected = selectedPhotos().length < pairsNeeded();
+          pool.push(result);
+          renderPhotos(); // show each photo as soon as it is ready
+        } catch (e) {
+          (problems[e && e.reason] || problems.unreadable).push(f.name || 'unnamed photo');
+        }
       }
+    } finally {
+      processing = false;
+      renderPhotos();
+      showPhotoProblems(problems);
+      debugLog('Done. Pool now ' + pool.length + ', chosen ' + selectedPhotos().length + ' of ' + pairsNeeded() +
+        '. Status: ' + el.photoStatus.textContent);
     }
-    processing = false;
-    renderPhotos();
-    if (failed) {
-      updatePhotoStatus(failed + (failed === 1 ? ' photo' : ' photos') + ' could not be opened. ' + el.photoStatus.textContent);
+  }
+
+  function showPhotoProblems(problems) {
+    var box = el.photoErrors;
+    box.innerHTML = '';
+    function add(title, names, advice) {
+      if (!names.length) return;
+      var p = document.createElement('p');
+      var s = document.createElement('strong');
+      s.textContent = title;
+      p.appendChild(s);
+      p.appendChild(document.createTextNode(' ' + advice));
+      box.appendChild(p);
+      var list = document.createElement('p');
+      list.className = 'files';
+      list.textContent = names.join(', ');
+      box.appendChild(list);
     }
+    var n = function (list) { return list.length + (list.length === 1 ? ' photo' : ' photos'); };
+    add(n(problems.heic) + ' couldn’t be opened.', problems.heic,
+      'They are in HEIC format (the iPhone photo format), which this browser can’t read. ' +
+      'Play in Safari, or export them as JPEG first (in Photos: File → Export) and add those.');
+    add(n(problems.unreadable) + ' couldn’t be opened.', problems.unreadable,
+      'This browser can’t read those files. JPEG and PNG photos always work.');
+    add(n(problems.timeout) + ' took too long to open.', problems.timeout,
+      'Try a smaller copy of the photo, or a different one.');
+    add(n(problems.duplicate) + ' already added.', problems.duplicate,
+      'Each photo can only be used once, so the copies were skipped.');
+    box.hidden = !box.childNodes.length;
   }
 
   function clearPool() {
     pool.forEach(TOYPhotos.release);
     pool = [];
+    el.photoErrors.hidden = true;
+    el.photoErrors.innerHTML = '';
   }
 
   el.fileInput.addEventListener('change', function () {
     var files = Array.prototype.slice.call(el.fileInput.files || []);
-    el.fileInput.value = '';
+    debugLog('Picker returned ' + files.length + ' file(s)');
+    // The input is cleared just before the picker next opens (openFilePicker),
+    // not here, so the browser keeps the picked files alive while we read them.
     addFiles(files);
   });
+  el.fileInput.addEventListener('cancel', function () { debugLog('Picker cancelled'); });
   $('btn-add-photos').addEventListener('click', openFilePicker);
   el.btnClear.addEventListener('click', function () { clearPool(); renderPhotos(); });
   $('btn-photos-back').addEventListener('click', function () { syncSetup(); show('setup'); });

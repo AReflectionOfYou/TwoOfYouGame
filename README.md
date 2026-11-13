@@ -16,6 +16,11 @@ much as to be won.
 - Photos stay on the device. Nothing is uploaded, and nothing is saved after
   the game is closed.
 
+> **Photo formats on a computer:** iPhone and Mac Photos pictures are often
+> HEIC files. Safari reads them, but Chrome, Firefox and Edge cannot, so on a
+> laptop either play in Safari or export the photos as JPEG first. On iPad and
+> iPhone this never comes up, because the photo picker hands over JPEGs.
+
 ## Run it locally
 
 There is no build step and there are no dependencies.
