@@ -1,0 +1,72 @@
+/* =====================================================================
+   TILE BACK DESIGN
+   ---------------------------------------------------------------------
+   This file is the only place the shared tile back is defined. Every
+   face-down tile (and the two decorative tiles on the setup screen)
+   uses the .tile-back class.
+
+   Quick changes: edit the custom properties below.
+     --tile-back-bg     base colour
+     --tile-back-hatch  colour of the cross-hatch lines and inner frame
+     --tile-back-ink    colour of the label text
+     --tile-back-label  the label text ("\A" is a line break; use
+                        none to hide the label)
+     --tile-back-image  an optional image layered over the hatch, e.g.
+                        url("../assets/brand-mark.svg") for the
+                        A Reflection of You brand mark
+
+   Full redesign: replace the rules below. --tile-size (the tile's
+   width in px) and --tile-radius are set by the game and can be used
+   to scale anything you draw.
+   ===================================================================== */
+
+:root {
+  --tile-back-bg: #2f3e5c;
+  --tile-back-hatch: rgba(255, 244, 225, 0.17);
+  --tile-back-ink: #fff4e1;
+  --tile-back-label: "Two\A of You";
+  --tile-back-image: none;
+}
+
+.tile-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--tile-back-bg);
+  background-image:
+    var(--tile-back-image),
+    repeating-linear-gradient(45deg, var(--tile-back-hatch) 0 2px, transparent 2px 11px),
+    repeating-linear-gradient(-45deg, var(--tile-back-hatch) 0 2px, transparent 2px 11px);
+  background-repeat: no-repeat, repeat, repeat;
+  background-position: center, 0 0, 0 0;
+  background-size: 62% auto, auto, auto;
+}
+
+/* Inner frame */
+.tile-back::before {
+  content: "";
+  position: absolute;
+  inset: 7%;
+  border: 2px solid var(--tile-back-hatch);
+  border-radius: calc(var(--tile-radius, 12px) * 0.6);
+  pointer-events: none;
+}
+
+/* Label plaque */
+.tile-back::after {
+  content: var(--tile-back-label);
+  white-space: pre;
+  text-align: center;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: calc(var(--tile-size, 120px) * 0.15);
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  color: var(--tile-back-ink);
+  background: var(--tile-back-bg);
+  padding: 0.3em 0.5em;
+  border-radius: 0.35em;
+  box-shadow: 0 0 0 2px var(--tile-back-hatch);
+  position: relative;
+}
