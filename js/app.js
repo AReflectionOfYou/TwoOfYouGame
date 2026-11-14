@@ -741,6 +741,25 @@
     show('setup');
   });
 
+  /* ---------------- About ---------------- */
+
+  // Only shows and hides a dialog; it never touches settings, game state or storage.
+  var about = $('about-dialog');
+  function closeAbout() {
+    if (typeof about.close === 'function') about.close();
+    else about.removeAttribute('open');
+  }
+  $('btn-about').addEventListener('click', function () {
+    if (typeof about.showModal === 'function') about.showModal();
+    else about.setAttribute('open', '');
+  });
+  // Clicking the backdrop (outside the panel's content) closes it.
+  about.addEventListener('click', function (e) { if (e.target === about) closeAbout(); });
+  // Escape closes a native modal dialog on its own; this covers the fallback.
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && about.hasAttribute('open')) { e.preventDefault(); closeAbout(); }
+  });
+
   /* ---------------- Boot ---------------- */
 
   // iOS only allows audio to start from a user gesture.

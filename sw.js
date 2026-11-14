@@ -4,7 +4,7 @@
  * Add any new app file to SHELL so it is available offline. */
 'use strict';
 
-var CACHE = 'two-of-you-v1';
+var CACHE = 'two-of-you-v2';
 var SHELL = [
   './',
   'index.html',

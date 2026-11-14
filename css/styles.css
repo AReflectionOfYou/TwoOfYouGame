@@ -461,6 +461,23 @@ h1:focus, h2:focus { outline: none; }
 .menu-body { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
 .menu-body h2 { color: var(--primary); }
 
+/* ---------- About ---------- */
+
+.about-row { margin: 0; text-align: center; }
+.about-link {
+  appearance: none; -webkit-appearance: none;
+  border: 0; background: none; padding: 6px 10px; margin: 0;
+  font: inherit; font-size: 0.85rem; color: var(--ink-soft);
+  cursor: pointer; touch-action: manipulation;
+}
+.about-link:hover { text-decoration: underline; }
+.about-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+.about-dialog { width: min(420px, calc(100vw - 32px)); }
+.about-dialog p { margin: 0; }
+.about-links { margin: 0; padding: 0; list-style: none; display: flex; gap: 18px; flex-wrap: wrap; }
+.about-links a { color: var(--primary); font-weight: 600; }
+.about-links a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
 /* ---------- ?debug diagnostics ---------- */
 
 .debug-log {
