@@ -49,6 +49,14 @@ button on the photo screen. It loads the generated test images in
 [dev/placeholder-photos/](dev/placeholder-photos/), which are for development
 only.
 
+### Troubleshooting photo loading
+
+Add `?debug` to the address (for example
+`https://areflectionofyou.github.io/TwoOfYouGame/?debug`) to show an on-screen
+log of what the photo picker returns and how each photo is processed: file
+name, format, size, dimensions, timings, and any error. It works on an iPad
+with no developer tools; take a screenshot of the log to share it.
+
 ## Install on an iPad as an app
 
 The game must be served over https (for example GitHub Pages: in the repo's
