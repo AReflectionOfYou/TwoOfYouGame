@@ -13,8 +13,10 @@ much as to be won.
 - Easy (6 pairs), Medium (8 pairs) and Hard (12 pairs)
 - Built for iPad Safari; also works on iPhone and desktop browsers
 - Installs to the home screen and works offline
-- Photos stay on the device. Nothing is uploaded, and nothing is saved after
-  the game is closed.
+- Your photos never leave your device.
+- Picks up where you left off: the next time the game opens, it offers to
+  **Play with previous setup** (same difficulty, players and photos) or
+  **Start over**.
 
 > **Photo formats on a computer:** iPhone and Mac Photos pictures are often
 > HEIC files. Safari reads them, but Chrome, Firefox and Edge cannot, so on a
@@ -94,6 +96,8 @@ The app icons in [icons/](icons/) are drawn by
 
 ## How to play
 
+0. If you played before on this device, choose **Play with previous setup**
+   to go straight to a new game, or **Start over** to set up from scratch.
 1. Choose a difficulty and the number of players, and enter names if you like.
 2. Choose photos. The game tells you how many it needs. If you pick too many,
    tap photos to choose which ones to use; if too few, add more.
@@ -115,6 +119,7 @@ css/styles.css        layout and look
 css/tile-back.css     the tile-back design (swap this to rebrand)
 js/app.js             screens, game rules, scoring, match reveal
 js/photos.js          crops and downsizes picked photos in memory
+js/store.js           saves the last game's photos on the device (IndexedDB)
 js/layout.js          picks the grid that best fits the screen
 js/audio.js           synthesized sound effects
 sw.js                 service worker (offline cache)
