@@ -2,8 +2,9 @@
  * Each picked file is decoded once and turned into two in-memory JPEGs:
  *   large: the uncropped photo, longest side at most LARGE px (match reveal)
  *   tile:  a centre-cropped square, at most TILE px (game tiles)
- * Photos never leave the device. Both images are blob URLs that live only for
- * the session; release() frees them. */
+ * Photos never leave the device. Both images are blob URLs; the blobs are kept
+ * too so the last game's photos can be saved on the device (see store.js) and
+ * rebuilt later with fromBlobs(). release() frees the URLs. */
 (function () {
   'use strict';
 
@@ -53,10 +54,10 @@
     });
   }
 
-  function toBlobUrl(canvas) {
+  function toBlob(canvas) {
     return new Promise(function (resolve, reject) {
       canvas.toBlob(function (blob) {
-        if (blob) resolve(URL.createObjectURL(blob));
+        if (blob) resolve(blob);
         else reject(fail('unreadable'));
       }, 'image/jpeg', QUALITY);
     });
@@ -98,7 +99,7 @@
       large.width = lw;
       large.height = lh;
       context(large).drawImage(img, 0, 0, lw, lh);
-      var largeUrl = await toBlobUrl(large);
+      var largeBlob = await toBlob(large);
 
       // Square tile, centre-cropped from the large version (a smaller source
       // gives a cleaner downscale and keeps memory low).
@@ -108,14 +109,14 @@
       tile.width = ts;
       tile.height = ts;
       context(tile).drawImage(large, (lw - side) / 2, (lh - side) / 2, side, side, 0, 0, ts, ts);
-      var tileUrl = await toBlobUrl(tile);
+      var tileBlob = await toBlob(tile);
 
       // Free canvas memory promptly (matters on iOS).
       large.width = large.height = 0;
       tile.width = tile.height = 0;
 
       log('  OK: large ' + lw + 'x' + lh + ', tile ' + ts + 'x' + ts + ', total ' + (Date.now() - t0) + ' ms');
-      return { tile: tileUrl, large: largeUrl };
+      return fromBlobs(tileBlob, largeBlob);
     } catch (e) {
       log('  processing FAILED: ' + (e.reason || (e.name + ': ' + e.message)));
       throw e;
@@ -124,11 +125,19 @@
     }
   }
 
+  /* Build a photo from its two JPEG blobs (freshly made, or loaded from storage). */
+  function fromBlobs(tileBlob, largeBlob) {
+    return {
+      tile: URL.createObjectURL(tileBlob), large: URL.createObjectURL(largeBlob),
+      tileBlob: tileBlob, largeBlob: largeBlob
+    };
+  }
+
   function release(photo) {
     if (!photo) return;
     URL.revokeObjectURL(photo.tile);
     URL.revokeObjectURL(photo.large);
   }
 
-  window.TOYPhotos = { process: process, release: release };
+  window.TOYPhotos = { process: process, fromBlobs: fromBlobs, release: release };
 })();

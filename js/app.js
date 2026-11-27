@@ -388,6 +388,9 @@
     photos.forEach(function (p, idx) { deck.push(idx, idx); });
     shuffle(deck);
 
+    // Remember this setup on the device for "Play with previous setup".
+    TOYStore.save(settings.difficulty, photos);
+
     game = {
       photos: photos,
       players: players,
@@ -760,6 +763,81 @@
     if (e.key === 'Escape' && about.hasAttribute('open')) { e.preventDefault(); closeAbout(); }
   });
 
+  /* ---------------- Resume previous setup ---------------- */
+
+  var resume = $('resume-dialog');
+  var resumePhotos = null; // photos rebuilt from storage while the dialog is open
+
+  function closeResume() {
+    if (typeof resume.close === 'function') resume.close();
+    else resume.removeAttribute('open');
+  }
+
+  function offerResume(record) {
+    // Only offer it if nothing has happened yet (the check is asynchronous).
+    if (!record || current !== 'setup' || game || pool.length) return;
+    var d = DIFFICULTIES[record.difficulty];
+    if (!d || record.photos.length !== d.pairs) return;
+
+    resumePhotos = record.photos.map(function (p) { return TOYPhotos.fromBlobs(p.tile, p.large); });
+    var names = [];
+    for (var i = 0; i < settings.playerCount; i++) names.push(displayName(i));
+    $('resume-sub').textContent = d.label + ' · ' + d.pairs + ' pairs · ' +
+      (settings.playerCount === 1 ? '1 player' : settings.playerCount + ' players') + ': ' + listNames(names);
+    var strip = $('resume-photos');
+    strip.innerHTML = '';
+    resumePhotos.forEach(function (p) {
+      var img = document.createElement('img');
+      img.src = p.tile;
+      img.alt = '';
+      strip.appendChild(img);
+    });
+    if (typeof resume.showModal === 'function') resume.showModal();
+    else resume.setAttribute('open', '');
+    $('btn-resume-play').focus();
+  }
+
+  $('btn-resume-play').addEventListener('click', function () {
+    var photos = resumePhotos;
+    var difficulty = Object.keys(DIFFICULTIES).filter(function (k) {
+      return DIFFICULTIES[k].pairs === (photos ? photos.length : 0);
+    })[0];
+    resumePhotos = null;
+    closeResume();
+    if (!photos || !difficulty) return;
+    settings.difficulty = difficulty;
+    saveSettings();
+    syncSetup();
+    clearPool();
+    photos.forEach(function (p) {
+      p.id = nextId++;
+      p.key = 'saved|' + p.id;
+      p.selected = true;
+      pool.push(p);
+    });
+    startGame();
+  });
+
+  $('btn-resume-new').addEventListener('click', function () {
+    if (resumePhotos) resumePhotos.forEach(TOYPhotos.release);
+    resumePhotos = null;
+    TOYStore.clear();
+    closeResume();
+  });
+
+  // Escape just closes it, leaving the saved setup for next time.
+  resume.addEventListener('close', function () {
+    if (resumePhotos) resumePhotos.forEach(TOYPhotos.release);
+    resumePhotos = null;
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && resume.hasAttribute('open') && typeof resume.close !== 'function') {
+      e.preventDefault();
+      closeResume();
+      resumePhotos = null;
+    }
+  });
+
   /* ---------------- Boot ---------------- */
 
   // iOS only allows audio to start from a user gesture.
@@ -767,6 +845,7 @@
 
   syncSetup();
   show('setup');
+  TOYStore.load().then(offerResume);
 
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     window.addEventListener('load', function () {
