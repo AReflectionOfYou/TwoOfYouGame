@@ -129,6 +129,13 @@ dev/                  development-only placeholder photos
 tools/                asset generator (development only)
 ```
 
+## Versions and problem reports
+
+The game's version is set once, in the `version` meta tag in [index.html](index.html), and appears in the
+About panel. Bump it with each release. About also has a **Having problems?** link that offers to open a
+new GitHub issue for this game with the version and browser filled in; it notes that reporting an issue
+needs a GitHub account.
+
 ## License
 
 Code is under the [MIT License](LICENSE). Documents, written content, images, audio, and video are under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); see [LICENSE-CONTENT](LICENSE-CONTENT). © 2026 Michael A. Heroux.

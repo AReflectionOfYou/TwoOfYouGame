@@ -9,6 +9,8 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Two of You">
+  <!-- The game's version, shown in the About panel. Bump it with each release. -->
+  <meta name="version" content="1.0.0">
   <title>Two of You</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png" type="image/png">
@@ -179,14 +181,31 @@
   <dialog id="about-dialog" class="menu-dialog about-dialog" aria-labelledby="about-title">
     <form method="dialog" class="menu-body">
       <h2 id="about-title">About</h2>
+      <p class="about-version">Two of You · Version <span id="about-version"></span></p>
       <p>© 2026 Michael A. Heroux</p>
       <p>Code is MIT licensed. Everything else is CC BY 4.0.</p>
       <ul class="about-links">
         <li><a href="https://opensource.org/license/mit" target="_blank" rel="noopener">MIT License</a></li>
         <li><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></li>
       </ul>
+      <p><button type="button" id="btn-problems" class="about-link about-problems">Having problems?</button></p>
       <div class="actions">
         <button type="submit" class="btn primary">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Having problems?: offers to open a new GitHub issue for this game -->
+  <dialog id="report-dialog" class="menu-dialog about-dialog" aria-labelledby="report-title">
+    <form method="dialog" class="menu-body">
+      <h2 id="report-title">Having problems?</h2>
+      <p>Would you like to report an issue? We'll open a new issue for Two of You on GitHub in a new tab,
+        with the game's version and your browser filled in. Then describe what went wrong.</p>
+      <p class="hint">Reporting an issue requires a free GitHub account.</p>
+      <div class="actions">
+        <button type="submit" class="btn">Not now</button>
+        <a id="report-go" class="btn primary" href="https://github.com/AReflectionOfYou/TwoOfYouGame/issues/new"
+           target="_blank" rel="noopener">Report an issue</a>
       </div>
     </form>
   </dialog>
