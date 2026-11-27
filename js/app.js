@@ -744,23 +744,57 @@
     show('setup');
   });
 
-  /* ---------------- About ---------------- */
+  /* ---------------- About and "Having problems?" ---------------- */
 
-  // Only shows and hides a dialog; it never touches settings, game state or storage.
+  // These only show and hide dialogs; they never touch settings, game state or storage.
+  var GAME_NAME = 'Two of You';
+  var ISSUES_URL = 'https://github.com/AReflectionOfYou/TwoOfYouGame/issues/new';
   var about = $('about-dialog');
-  function closeAbout() {
-    if (typeof about.close === 'function') about.close();
-    else about.removeAttribute('open');
+  var report = $('report-dialog');
+
+  function gameVersion() {
+    var meta = document.querySelector('meta[name="version"]');
+    return meta ? meta.content.trim() : '';
   }
+  function openDialog(d) {
+    if (typeof d.showModal === 'function') d.showModal();
+    else d.setAttribute('open', '');
+  }
+  function closeDialog(d) {
+    if (typeof d.close === 'function') d.close();
+    else d.removeAttribute('open');
+  }
+
+  // A new-issue link with the game, version and browser filled in.
+  function issueUrl() {
+    var body = '**What happened?**\n\n\n**What did you expect to happen?**\n\n\n' +
+      '---\nGame: ' + GAME_NAME + ' ' + (gameVersion() || '(unknown version)') +
+      '\nBrowser: ' + navigator.userAgent;
+    return ISSUES_URL + '?body=' + encodeURIComponent(body);
+  }
+
   $('btn-about').addEventListener('click', function () {
-    if (typeof about.showModal === 'function') about.showModal();
-    else about.setAttribute('open', '');
+    $('about-version').textContent = gameVersion() || 'unknown';
+    openDialog(about);
   });
-  // Clicking the backdrop (outside the panel's content) closes it.
-  about.addEventListener('click', function (e) { if (e.target === about) closeAbout(); });
+  $('btn-problems').addEventListener('click', function () {
+    closeDialog(about);
+    $('report-go').href = issueUrl();
+    openDialog(report);
+  });
+  // The link opens GitHub in a new tab; close the panel behind it.
+  $('report-go').addEventListener('click', function () { closeDialog(report); });
+
+  [about, report].forEach(function (d) {
+    // Clicking the backdrop (outside the panel's content) closes it.
+    d.addEventListener('click', function (e) { if (e.target === d) closeDialog(d); });
+  });
   // Escape closes a native modal dialog on its own; this covers the fallback.
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && about.hasAttribute('open')) { e.preventDefault(); closeAbout(); }
+    if (e.key !== 'Escape') return;
+    [about, report].forEach(function (d) {
+      if (d.hasAttribute('open')) { e.preventDefault(); closeDialog(d); }
+    });
   });
 
   /* ---------------- Resume previous setup ---------------- */

@@ -488,6 +488,9 @@ h1:focus, h2:focus { outline: none; }
 .about-links { margin: 0; padding: 0; list-style: none; display: flex; gap: 18px; flex-wrap: wrap; }
 .about-links a { color: var(--primary); font-weight: 600; }
 .about-links a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.about-version { color: var(--ink-soft); font-size: 0.9rem; }
+.about-dialog .about-problems { padding: 0; color: var(--primary); font-weight: 600; text-decoration: underline; }
+a.btn { text-decoration: none; }
 
 /* ---------- ?debug diagnostics ---------- */
 
